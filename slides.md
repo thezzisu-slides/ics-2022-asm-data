@@ -1,4 +1,6 @@
 ---
+routerMode: hash
+favicon: https://asset.zisu.dev/svg/logo.svg
 theme: seriph
 background: ./img/94463658_p0.jpg
 class: 'text-center'
