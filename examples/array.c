@@ -3,7 +3,7 @@
 
 void print_two_ptrs(void *p, void *q)
 {
-  printf("%p %p", p, q);
+  printf("%p %p\n", p, q);
 }
 
 void two_d_array_fake_deref()
@@ -23,8 +23,18 @@ void multi_level_array()
   print_two_ptrs(p, q);
 }
 
+void array_pass_by_ref(int a[2])
+{
+  int z = a[0];
+  a[0] = a[1];
+  a[1] = z;
+}
+
 int main()
 {
-  // two_d_array_fake_deref();
+  two_d_array_fake_deref();
   multi_level_array();
+  int a[2] = {1, 2};
+  array_pass_by_ref(a);
+  printf("%d %d", a[0], a[1]);
 }

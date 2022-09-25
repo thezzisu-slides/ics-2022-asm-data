@@ -69,7 +69,7 @@ Section 1. Float
 - The standard math coprocessor for the 8086 and 8088, operating on 80-bit numbers.
 
 <div class="abs-tr m-6">
- <img src="https://www.mynikko.com/CPU/img/P8088-2-a.jpg" width="280">
+ <img src="/img/P8088-2-a.jpg" width="280">
  <div class="w-full text-center text-sm">A 8087 chip</div>
 </div>
 
@@ -87,7 +87,7 @@ Section 1. Float
 - FP support always available
 
 <div class="abs-tr m-6">
- <img src="https://www.mynikko.com/CPU/img/MG80386-a.jpg" width="280">
+ <img src="/img/MG80386-a.jpg" width="280">
  <div class="w-full text-center text-sm">A 80386 chip</div>
 </div>
 
@@ -105,7 +105,7 @@ Section 1. Float
 - FP support always available
 
 <div class="abs-tr m-6">
- <img src="https://www.mynikko.com/CPU/img/MG80386-a.jpg" width="280">
+ <img src="/img/MG80386-a.jpg" width="280">
  <div class="w-full text-center text-sm">A 80386 chip</div>
 </div>
 
@@ -152,7 +152,7 @@ AVX-512 expands AVX to 512-bit support using a new EVEX prefix encoding proposed
 
 ---
 layout: image-left
-image: https://web.archive.org/web/20170216110456im_/https://software.intel.com/sites/default/files/37206.gif
+image: /img/37206.gif
 ---
 # AVX2: Basics
 Section 1. Float
@@ -172,7 +172,7 @@ Section 1. Float
 
 This figure illustrates the data types used in the Intel® SSE and Intel® AVX instructions. Roughly, for Intel AVX, any multiple of 32-bit or 64-bit floating-point type that adds to 128 or 256 bits is allowed as well as multiples of any integer type that adds to 128 bits.
 
-![](https://web.archive.org/web/20170216110411im_/https://software.intel.com/sites/default/files/37207.gif)
+![](/img/37207.gif)
 
 ---
 
@@ -469,7 +469,7 @@ void two_d_array_fake_deref() {
   int a[2][2];
   register int **p = a; // leaq	-48(%rbp), %rbx
   register int *q = *a; // leaq	-48(%rbp), %r12
-  printf("%p %p", p, q);
+  print_two_ptrs(p, q);
 }
 ```
 
@@ -541,7 +541,7 @@ void multi_level_array() {
   int *a[2] = {a1, a2};
   register int **p = a;
   register int *q = *a;
-  printf("%p %p", p, q);
+  print_two_ptrs(p, q);
 }
 ```
 
@@ -572,7 +572,90 @@ multi_level_array:
   </div>
 </div>
 
-There is no warning for this case. Why?
+There is no compiler warning for this case. Why?
+
+---
+
+# Array: Variable-Size Arrays
+Section 2. Array
+
+Historically, C only supported multidimensional arrays where the sizes (with the possible exception of the first dimension) could be determined at **compile time**.
+
+ISO C99 introduced the capability of declaring arrays with dimension expressions, which are evaluated at **run time**.
+
+So this 'variable-size' means the size is determined at **run time**. Do not confuse with **Vectors**!
+
+Syntax:
+```c
+int var_size_arr_example(int n, int a[n][n]) {
+  int m = n * 2;
+  int b[m];
+}
+```
+
+---
+
+# Array: Variable-Size Arrays
+Section 2. Array
+
+The compiler will do the dirty index-to-offset calculation for you.
+
+Also, for some usage pattern of variable-size arrays, the compiler may optimize it to avoid `imul` instruction for address calculation.
+
+Example (from CSAPP):
+```c
+int var_prod_ele(long n, int A[n][n], int B[n][n], long i, long k) {
+  long j;
+  int result = 0;
+  for (j = 0; j < n; j++)
+    result += A[i][j] * B[j][k];
+  return result;
+}
+```
+
+---
+
+# Array: Variable-Size Arrays
+Section 2. Array
+
+The increasement of `&A[i][j]` and `&B[j][k]` is fixed. So the compiler can optimize it to:
+
+```c
+int var_prod_ele_opt(long n, int A[n][n], int B[n][n], long i, long k) {
+  int *Aptr = &A[i][0];
+  int *Bptr = &B[0][k];
+  int result = 0;
+  while (n--) {
+    result += (*Aptr) * (*Bptr);
+    Aptr ++;
+    Bptr += n;
+  }
+  return result;
+}
+```
+
+---
+
+# Array: Pass by Reference
+Section 2. Array
+
+In C, scalar types are passed by value. But when it comes to arrays, things became more complicated.
+
+```c
+void array_pass_by_ref(int a[2]) {
+  int z = a[0]; a[0] = a[1]; a[1] = z;
+}
+
+int main() {
+  int a[2] = {1, 2};
+  array_pass_by_ref(a);
+  printf("%d %d", a[0], a[1]);
+}
+```
+
+The output will be `2 1`.
+
+We should notice that type `int[2]` is **just a `int*` with length metadata**.
 
 ---
 layout: image-right
@@ -583,6 +666,10 @@ image: ./img/section-3.jpg
   <div class="text-2xl font-bold">Section 3</div>
   <h1 class="text-8xl!">Structure</h1>
 </div>
+
+---
+
+
 
 ---
 layout: image-right
