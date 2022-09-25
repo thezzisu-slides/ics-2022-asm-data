@@ -204,7 +204,7 @@ void move_ins()
   register float y, z; // y in %xmm0
   y = *p; // vmovss	(%rax), %xmm0
   *p = y; // vmovss	%xmm0, (%rax)
-  y = z;  // vmovaps %xmm2, %xmm1
+  y = z;  // vmovaps	%xmm2, %xmm1
 }
 ```
 
@@ -380,6 +380,199 @@ image: ./img/section-2.jpg
   <div class="text-2xl font-bold">Section 2</div>
   <h1 class="text-8xl!">Array</h1>
 </div>
+
+---
+
+# Array: Basics
+Section 2. Array
+
+```c
+T a[N];
+```
+
+- Declare an array of type T with N elements.
+- The array is stored in a contiguous memory region, with total size of `N * sizeof(T)`.
+- What's the type of `a`?
+  - `T [N]` since GCC will attach size information to the type during compilation.
+  - Actually it's `T*` (pointer to T)
+
+```
+T e = a[i];
+```
+
+- We can access array elements using `[]` operator.
+- For C arrays, `[]` is a syntactic sugar for pointer arithmetic:
+  - `a[i]` is equivalent to `*(a + (i))`.
+
+---
+
+# Array: Basics
+Section 2. Array
+
+Thus, array accessing is simple:
+```c
+   a[i]
+=> *(a + (i))
+=> *(T*)((long)a + (i) * sizeof(T))
+```
+For
+```c
+int a[4], i = 2; // a in %rdi, i in %esi
+int b = a[i];    // b in %eax
+```
+We get:
+```asm
+movl (%rdi, %rsi, 4), %eax ; sizeof(int) = 4
+```
+
+---
+
+# Array: Nested Array
+Section 2. Array
+
+We only need to consider 2d array which is the essential case.
+
+```c
+T a[N][M];
+```
+
+Is equivalent to:
+
+```c
+typedef T row[M]; // This syntax is somehow weird though
+row a[N];
+```
+
+And `a[i][j]` is equivalent to `(a[i])[j]`. Thus we have:
+
+```c
+   a[i][j]
+=> (a[i])[j]
+=> (*(a + (i)))[j] // Notice this asterisk is not a dereference!
+=> *((*(a + (i))) + (j))
+=> *(T*)((long)a + (i) * sizeof(row) + (j) * sizeof(T))
+=> *(T*)((long)a + ((i) * M + (j)) * sizeof(T))
+```
+
+Notice the difference between `T[N][M]` and `T**`. We'll discuss this later.
+
+---
+
+# Array: Nested Array
+Section 2. Array
+
+<div class="grid grid-cols-2">
+  <div>
+
+```c
+void two_d_array_fake_deref() {
+  int a[2][2];
+  register int **p = a; // leaq	-48(%rbp), %rbx
+  register int *q = *a; // leaq	-48(%rbp), %r12
+  printf("%p %p", p, q);
+}
+```
+
+Outputs:
+
+```
+0x7ffc820f60d0 0x7ffc820f60d0
+```
+
+  </div>
+  <div>
+
+```asm
+two_d_array_fake_deref:
+	subq	$32, %rsp
+	leaq	-48(%rbp), %rbx
+	leaq	-48(%rbp), %r12
+	movq	%r12, %rsi
+	movq	%rbx, %rdi
+	call	print_two_ptrs
+  ret
+```
+
+  </div>
+</div>
+
+Compiler warning:
+
+```
+array.c: In function ‘two_d_array_fake_deref’:
+array.c:7:22: warning: initialization of ‘int **’ from incompatible pointer type ‘int (*)[2]’ [-Wincompatible-pointer-types]
+    7 |   register int **p = a
+```
+
+Do not confuse with **Multi-Level Array**!
+
+---
+
+# Array: Multi-Level Array
+Section 2. Array
+
+```c
+int a_0[M], a_1[M];
+int* a[N] = {a_0, a_1}; // Let's assume N = 2
+```
+
+Since `a[i][j]` is equivalent to `(a[i])[j]`:
+
+```c
+   a[i][j]
+=> (a[i])[j]
+=> (*(a + (i)))[j] // Notice this asterisk is a dereference!
+=> *((*(a + (i))) + (j)) // We have 2 dereferences in total!
+```
+
+In fact, `a` can hold arrays of **different sizes** because `a[i]` is just a pointer to `int`.
+
+---
+
+# Array: Multi-Level Array
+Section 2. Array
+
+<div class="grid grid-cols-2">
+  <div>
+
+```c
+void multi_level_array() {
+  int a1[2], a2[2];
+  int *a[2] = {a1, a2};
+  register int **p = a;
+  register int *q = *a;
+  printf("%p %p", p, q);
+}
+```
+
+Outputs:
+
+```
+0x7ffd4663fa90 0x7ffd4663fa80
+```
+
+  </div>
+  <div>
+
+```asm
+multi_level_array:
+	subq	$48, %rsp
+	leaq	-64(%rbp), %rax
+	movq	%rax, -48(%rbp)
+	leaq	-56(%rbp), %rax
+	movq	%rax, -40(%rbp)
+	leaq	-48(%rbp), %rbx ; p
+	movq	-48(%rbp), %r12 ; q, dereferencing
+	movq	%r12, %rsi
+	movq	%rbx, %rdi
+	call	print_two_ptrs
+	ret
+```
+
+  </div>
+</div>
+
+There is no warning for this case. Why?
 
 ---
 layout: image-right
