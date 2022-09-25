@@ -669,7 +669,33 @@ image: ./img/section-3.jpg
 
 ---
 
+# Struct: Basics
+Section 3. Structure
 
+---
+
+# Struct: Representation
+Section 3. Structure
+
+---
+
+# Struct: Alignment
+Section 3. Structure
+
+---
+
+# Struct: Bit field
+Section 3. Structure
+
+---
+
+# Union: Basics
+Section 3. Structure
+
+---
+
+# Union: Usages
+Section 3. Structure
 
 ---
 layout: image-right
@@ -678,7 +704,7 @@ image: ./img/section-4.jpg
 
 <div class="abs-bl m-12">
   <div class="text-2xl font-bold">Section 4</div>
-  <h1 class="text-8xl!">Attack</h1>
+  <h1 class="text-8xl!">More</h1>
 </div>
 
 ---
