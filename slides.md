@@ -1,4 +1,5 @@
 ---
+colorSchema: light
 routerMode: hash
 favicon: https://asset.zisu.dev/svg/logo.svg
 theme: seriph
@@ -8,7 +9,7 @@ highlighter: shiki
 lineNumbers: true
 info: |
   ## ICS2022 Review for Machine Programs: Data
-  Presented by [thezzisu](github.com/thezzisu)
+  Presented by [thezzisu](https://zisu.dev)
 drawings:
   persist: false
 css: unocss
