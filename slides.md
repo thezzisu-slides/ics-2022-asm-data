@@ -672,30 +672,276 @@ image: ./img/section-3.jpg
 # Struct: Basics
 Section 3. Structure
 
+If you came from other languages, you may be familiar with the concept of **class**.
+
+In OOP's view, a class is a mixture of data and behaviors; But in C, struct is just collection of data.
+
+Abstractly, we can think of struct as a **record**.
+
+Syntax:
+
+```c
+struct LifeCompetition {
+  char *winner;
+  int queen_living_years, frog_living_years;
+  float covid_bonus;
+};
+
+struct LifeCompetition current;
+// OR
+typedef struct LifeCompetition LifeCompetition;
+LifeCompetition current;
+```
+
+This `typedef` syntax is very common in C. Let's explain that in details.
+
+<!-- 
+  struct is defined in the `Tag` namespace,
+  while types are defined in the `Identifier` namespace.
+ -->
+
 ---
 
 # Struct: Representation
 Section 3. Structure
+
+However, as a (good) Programmer or (85+) ICS learner, we should also think struct as a **syntax sugar** for multiple variables.
+
+<div class="grid grid-cols-2">
+  <div>
+
+```c
+void struct_layout()
+{
+  Example e;
+  e.a = 1; // -12(%rbp)
+  e.b = 'a'; // -8(%rbp)
+  e.c = 1.0; // -4(%rbp)
+  print_example(e);
+}
+```
+
+Outputs:
+
+```
+a: 1, b: a, c: 1.000000
+```
+
+  </div>
+  <div>
+
+```asm
+struct_layout:
+	pushq	%rbp
+	movq	%rsp, %rbp
+	subq	$16, %rsp
+	movl	$1, -12(%rbp)
+	movb	$97, -8(%rbp)
+	movss	.LC1(%rip), %xmm0
+	movss	%xmm0, -4(%rbp)
+	movq	-12(%rbp), %rdx
+	movl	-4(%rbp), %eax
+	movq	%rdx, %rdi
+	movd	%eax, %xmm0
+	call	print_example
+	leave
+	ret
+```
+
+  </div>
+</div>
+
+
+---
+
+# Struct: Representation
+Section 3. Structure
+
+From the example above, we can find:
+- Struct is just a block of memory, which is big enough to hole all its fields;
+- Struct fields is allocated in the order of declaration;
+- Compiler will determine the overall size and field offset during compile time;
+- Field access is just a memory access with offset.
+- Also, there is padding between fields - which is required for **alignment**.
 
 ---
 
 # Struct: Alignment
 Section 3. Structure
 
+Alignment rules:
+- Primitive types are aligned to their size, which means their address must be a multiple of their size:
+  - `char` is aligned to 1 byte, no special address requirement;
+  - `int` is aligned to 4 bytes, address must be a multiple of 4;
+  - `double` is aligned to 8 bytes, address must be a multiple of 8.
+- Structs are aligned to the largest alignment of its fields, which means every struct's beginning address must be a multiple of the largest alignment of its fields:
+  - For the struct `Example`, it shoud be 4-aligned because of the `int` and `float` field.
+
+Let's see some examples.
+
+<!-- 
+Use chalk to draw a struct with internal padding and tail padding.
+ -->
+
 ---
 
 # Struct: Bit field
 Section 3. Structure
+
+However, sometimes, `char` is too big for us.
+
+Consider a simple binary protocal, which is used to transfer data between two embedded devices.
+
+```
+PACKET = HEADER(1byte) + LENGTH(2bytes) + BODY(var)
+HEADER = VERSION(3bits) + COMPRESSED(1bit) + ENCRYPTED(1bit) + RESERVED(3bits)
+```
+
+Gotcha! We need to use only 1 byte to store the header, but how about its fields?
+
+Yes we can use a `char` for the header, and do some bit operations to get the fields. But it's not **semantic**.
+
+A better solution is to use **bit field**.
+
+---
+
+# Struct: Bit field
+Section 3. Structure
+
+```c
+typedef struct Header
+{
+  char version : 3;
+  char compressed : 1;
+  char encrypted : 1;
+  char reversed : 3;
+} Header;
+```
+
+See more at [GNU GCC manual](https://gcc.gnu.org/onlinedocs/gcc/Structures-unions-enumerations-and-bit-fields-implementation.html).
+
+---
+
+# Struct: Bit field
+Section 3. Structure
+
+<div class="grid grid-cols-2">
+  <div>
+
+```c
+void bit_field()
+{
+  Header h;
+  h.version = 0b001;
+  h.compressed = 0b1;
+  h.encrypted = 0b0;
+  h.reversed = 0b111;
+  print_header(h);
+}
+```
+
+Compiler is doing dirty works for us.
+
+  </div>
+  <div>
+
+```asm
+bit_field:
+	pushq	%rbp
+	movq	%rsp, %rbp
+	subq	$16, %rsp
+	movzbl	-1(%rbp), %eax
+	andl	$-8, %eax
+	orl	$1, %eax
+	movb	%al, -1(%rbp)
+	movzbl	-1(%rbp), %eax
+	orl	$8, %eax
+	movb	%al, -1(%rbp)
+	movzbl	-1(%rbp), %eax
+	andl	$-17, %eax
+	movb	%al, -1(%rbp)
+	movzbl	-1(%rbp), %eax
+	orl	$-32, %eax
+	movb	%al, -1(%rbp)
+	movzbl	-1(%rbp), %eax
+	movl	%eax, %edi
+	call	print_header
+	leave
+	ret
+```
+
+  </div>
+</div>
+
 
 ---
 
 # Union: Basics
 Section 3. Structure
 
+Type casting in C is very common. But the default casting behavior in C is semantic.
+
+If we cast a float to an int, we will get it's **value**, rather than its **bit content**. That's why bitlab need to pass floats as unsigned.
+
+In the previous discussion class, our TA mentioned that we can **pointer casting** to cast type without touching its underlying bit representation. But it's not very convenient:
+- Slow down without compiler optimization - naïve compilers will refuse to optimize variable into register;
+- Hard to read - we need to cast pointer to pointer, and then dereference it;
+- Dangerous - we need to make sure the pointer is valid, especially we are casting to a bigger type.
+
+Use `union` could tackle these problems.
+
 ---
 
-# Union: Usages
+# Union: Usage
 Section 3. Structure
+
+```c
+typedef union float_unsigned_converter
+{
+  float f;
+  unsigned int u;
+} float_unsigned_converter;
+```
+
+Kinda like struct, but all fields share the same memory space.
+
+---
+
+# Union: Usage
+Section 3. Structure
+
+<div class="grid grid-cols-2">
+  <div>
+
+```c
+unsigned convert_float_to_unsigned()
+{
+  float_unsigned_converter c; // -4(%rbp)
+  c.f = 1.0;
+  return c.u;
+}
+```
+
+  </div>
+  <div>
+
+```asm
+convert_float_to_unsigned:
+	pushq	%rbp
+	movq	%rsp, %rbp
+	movss	.LC1(%rip), %xmm0
+	movss	%xmm0, -4(%rbp)
+	movl	-4(%rbp), %eax
+	popq	%rbp
+	ret
+```
+
+  </div>
+</div>
+
+Please note that there is no `type` in assembly code - there are just instructions, with operands.
+
+All data is just binary blobs - **All beings are equal**.
 
 ---
 layout: image-right
