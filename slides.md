@@ -601,7 +601,7 @@ int var_prod_ele(long n, int A[n][n], int B[n][n], long i, long k) {
 # Array: Variable-Size Arrays
 Section 2. Array
 
-The increasement of `&A[i][j]` and `&B[j][k]` is fixed. So the compiler can optimize it to:
+The increment of `&A[i][j]` and `&B[j][k]` is fixed. So the compiler can optimize it to:
 
 ```c
 int var_prod_ele_opt(long n, int A[n][n], int B[n][n], long i, long k) {
@@ -925,6 +925,145 @@ convert_float_to_unsigned:
 Please note that there is no `type` in assembly code - there are just instructions, with operands.
 
 All data is just binary blobs - **All beings are equal**.
+
+---
+
+# Union: Usage
+Section 3. Structure
+
+Union can also have fields with different types. The size of a union is the size of its largest field.
+
+For GCC and x86-64, fields are aligned to start. For example:
+
+```c
+typedef union different_size
+{
+  int a;
+  long long b;
+} different_size;
+
+void test_different_size()
+{
+  different_size d;
+  d.b = 0x1234567821436587;
+  printf("%ld %x %llx\n", sizeof(d), d.a, d.b);
+}
+```
+
+Gives
+
+```
+8 21436587 1234567821436587
+```
+
+---
+
+# Advanced: Struct in Struct
+Section 3. Structure
+
+We have struct, but how about struct in struct 🤯?
+
+```c
+typedef struct UncleMai {
+  double priceOfKingOldLucky;
+  int countOfKingOldLucky;
+} UncleMai;
+
+typedef struct BuildingLee {
+  UncleMai store;
+  int studentCount;
+} BuildingLee;
+
+printf("%ld %ld\n", sizeof(UncleMai), sizeof(BuildingLee));
+```
+
+What's the result?
+
+<!-- 16 24 -->
+
+---
+
+# Advanced: Struct in Union
+Section 3. Structure
+
+OK, let's dig in. How about using struct in union 🤯🤯?
+
+The following code is taken from my (failed) DataLab solution.
+
+```c
+typedef struct {
+  unsigned bit0 : 1; unsigned bit1 : 1; unsigned bit2 : 1; unsigned bit3 : 1;
+  unsigned bit4 : 1; unsigned bit5 : 1; unsigned bit6 : 1; unsigned bit7 : 1;
+  unsigned bit8 : 1; unsigned bit9 : 1; unsigned bit10 : 1; unsigned bit11 : 1;
+  unsigned bit12 : 1; unsigned bit13 : 1; unsigned bit14 : 1; unsigned bit15 : 1;
+  unsigned bit16 : 1; unsigned bit17 : 1; unsigned bit18 : 1; unsigned bit19 : 1;
+  unsigned bit20 : 1; unsigned bit21 : 1; unsigned bit22 : 1; unsigned bit23 : 1;
+  unsigned bit24 : 1; unsigned bit25 : 1; unsigned bit26 : 1; unsigned bit27 : 1;
+  unsigned bit28 : 1; unsigned bit29 : 1; unsigned bit30 : 1; unsigned bit31 : 1;
+} ZUnsigned;
+typedef union {
+  ZUnsigned bits;
+  unsigned value;
+} ZUnsignedUnion;
+```
+
+If datalab do not count dot operators, what can we achive with this?
+
+---
+
+# Advanced: Union in Struct
+Section 3. Structure
+
+Half way there ~~(taken from BombLab)~~. Let's see union in struct 🤯🤯🤯!
+
+```c
+typedef union U1 {
+  int i;
+  float f;
+} U1;
+typedef struct S1 {
+  U1 u;
+  long long ll;
+} S1;
+void union_in_struct() {
+  S1 s;
+  s.u.i = 1; s.u.f = 1.0; s.ll = 1;
+  printf("%ld %x %f %lld\n", sizeof(s), s.u.i, s.u.f, s.ll);
+}
+```
+
+The output is:
+
+```
+16 3f800000 1.000000 1
+```
+
+---
+
+# Advanced: Union in Union
+Section 3. Structure
+
+Finally, union in union 🤯🤯🤯🤯!
+
+```c
+typedef union U1 {
+  int i;
+  float f;
+} U1;
+
+typedef union U2 {
+  U1 u;
+  long long ll;
+} U2;
+
+void nested_union() {
+  U2 u2;
+  u2.u.f = 1.0;
+  printf("%x %f %llx\n", u2.u.i, u2.u.f, u2.ll);
+}
+```
+
+Although it's kinda useless, it's still a valid C program.
 
 ---
 layout: image-right
