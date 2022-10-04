@@ -1,14 +1,18 @@
 #include <stdio.h>
 #include <math.h>
 
-void move_ins()
+void print(float y)
 {
-  float x;
-  float *p = &x;       // p in %rax
-  register float y, z; // y in %xmm0, z in %xmm1
-  y = *p;
+  printf("%f\n", y);
+}
+
+void move_ins(float *p)
+{
+  register float y asm("xmm0") = 1.0, z asm("xmm1");
+  z = *p;
   *p = y;
   y = z;
+  print(y);
 }
 
 void arg_mapping(int a, float b, long long c, double d)

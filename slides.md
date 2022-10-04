@@ -180,14 +180,13 @@ Section 1. Float
   <div>
 
 ```c
-void move_ins()
+void move_ins(float *p)
 {
-  float x;
-  float *p = &x; // p in %rax
-  register float y, z; // y in %xmm0
-  y = *p; // vmovss	(%rax), %xmm0
-  *p = y; // vmovss	%xmm0, (%rax)
-  y = z;  // vmovaps	%xmm2, %xmm1
+  register float y asm("xmm0") = 1.0, z asm("xmm1");
+  z = *p; // vmovss	(%rax), %xmm1
+  *p = y; // vmovd	%xmm0, %eax； movl	%eax, (%rdx)
+  y = z;  // vmovaps	%xmm1, %xmm0
+  print(y);
 }
 ```
 
@@ -195,23 +194,25 @@ void move_ins()
   <div>
 
 ```asm
-move_ins: ; redacted
-	subq	$32, %rsp
-	movq	%rax, -8(%rbp)
-	xorl	%eax, %eax
-	leaq	-20(%rbp), %rax
-	movq	%rax, -16(%rbp)
-	movq	-16(%rbp), %rax
-	vmovss	(%rax), %xmm0
-	movq	-16(%rbp), %rax
-	vmovss	%xmm0, (%rax)
-	vmovaps	%xmm2, %xmm1
+move_ins:
+	pushq	%rbp
+	movq	%rsp, %rbp
+	subq	$16, %rsp
+	movq	%rdi, -8(%rbp)
+	vmovss	.LC1(%rip), %xmm0
+	movq	-8(%rbp), %rax
+	vmovss	(%rax), %xmm1
+	vmovd	%xmm0, %eax
+	movq	-8(%rbp), %rdx
+	movl	%eax, (%rdx)
+	vmovaps	%xmm1, %xmm0
+	call	print
+	leave
+	ret
 ```
 
   </div>
 </div>
-
-Why `y = z` emits `vmovaps %xmm2, %xmm1`?
 
 ---
 
