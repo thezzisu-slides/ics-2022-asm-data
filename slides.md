@@ -13,6 +13,7 @@ info: |
 drawings:
   persist: false
 css: unocss
+download: true
 ---
 
 # ICS2022 Review
