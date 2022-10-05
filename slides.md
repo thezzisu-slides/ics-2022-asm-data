@@ -748,6 +748,8 @@ From the example above, we can find:
 - Field access is just a memory access with offset.
 - Also, there is padding between fields - which is required for **alignment**.
 
+Additional example can be found at [here](https://godbolt.org/z/qeEYb1vEb).
+
 ---
 
 # Struct: Alignment
